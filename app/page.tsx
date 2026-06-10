@@ -100,12 +100,14 @@ export default function Page() {
   }
 
   async function handleDelete(id: string) {
+    setRecords(prev => prev.filter(r => r.id !== id));
+    showToast('已删除');
     try {
-      await fetch(`/api/record?id=${id}&week=${weekKey}`, { method: 'DELETE' });
-      await fetchRecords();
-      showToast('已删除');
+      const res = await fetch(`/api/record?id=${id}&week=${weekKey}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
     } catch {
-      showToast('删除失败', 'error');
+      await fetchRecords();
+      showToast('删除失败，已还原', 'error');
     }
   }
 
