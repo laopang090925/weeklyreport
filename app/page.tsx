@@ -28,6 +28,7 @@ function getWeekDisplay(weekKey: string): string {
 export default function Page() {
   const [records, setRecords] = useState<WorkRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [weekLoading, setWeekLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -50,20 +51,23 @@ export default function Page() {
   const showToast = useCallback((msg: string, type: Toast['type'] = 'info') => {
     setToast({ msg, type });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2800);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const fetchRecords = useCallback(async () => {
+  const fetchRecords = useCallback(async (showWeekLoading = false) => {
+    if (showWeekLoading) setWeekLoading(true);
     try {
       const res = await fetch(`/api/record?week=${weekKey}`);
       const data = await res.json();
       setRecords(data.records ?? []);
     } catch {
       showToast('加载记录失败', 'error');
+    } finally {
+      if (showWeekLoading) setWeekLoading(false);
     }
   }, [weekKey, showToast]);
 
-  useEffect(() => { fetchRecords(); }, [fetchRecords]);
+  useEffect(() => { fetchRecords(true); }, [fetchRecords]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -228,6 +232,7 @@ export default function Page() {
                 <button
                   className="pill-btn"
                   onClick={() => setWeekOffset(o => o - 1)}
+                  disabled={weekLoading}
                   title="上一周"
                 >
                   ‹
@@ -235,7 +240,7 @@ export default function Page() {
                 <button
                   className="pill-btn"
                   onClick={() => setWeekOffset(o => o + 1)}
-                  disabled={weekOffset >= 0}
+                  disabled={weekOffset >= 0 || weekLoading}
                   title="下一周"
                 >
                   ›
@@ -244,7 +249,11 @@ export default function Page() {
             </div>
 
             <div className="record-list">
-              {records.length === 0 ? (
+              {weekLoading ? (
+                <div className="record-empty">
+                  <span className="spinner" style={{ borderColor: 'rgba(0,0,0,.15)', borderTopColor: 'var(--blue)', width: 20, height: 20 }} />
+                </div>
+              ) : records.length === 0 ? (
                 <div className="record-empty">暂无记录</div>
               ) : (
                 records.map((r, i) => (
