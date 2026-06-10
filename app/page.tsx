@@ -1,20 +1,36 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { VALID_PROJECT_TYPES, WorkRecord, getWeekRange, getWeekKey } from '@/lib/report';
+import { VALID_PROJECT_TYPES, WorkRecord, getWeekKey } from '@/lib/report';
 
 interface Toast { msg: string; type: 'success' | 'error' | 'info' }
 
+function getWeekKeyByOffset(offset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offset * 7);
+  const day = d.getDay();
+  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
+  return d.toISOString().split('T')[0];
+}
+
+function getWeekDisplay(weekKey: string): string {
+  const mon = new Date(weekKey + 'T00:00:00');
+  const fri = new Date(weekKey + 'T00:00:00');
+  fri.setDate(mon.getDate() + 4);
+  const dot = (d: Date) =>
+    `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  return `${dot(mon)} - ${dot(fri)}`;
+}
+
 export default function Page() {
   const [records, setRecords] = useState<WorkRecord[]>([]);
-  const [preview, setPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [previewText, setPreviewText] = useState('');
+  const [weekOffset, setWeekOffset] = useState(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null);
-
-  const weekKey = getWeekKey();
-  const { start, end } = getWeekRange(weekKey);
 
   // form state
   const [projectType, setProjectType] = useState<string>(VALID_PROJECT_TYPES[0]);
@@ -22,10 +38,16 @@ export default function Page() {
   const [content, setContent] = useState('');
   const [issue, setIssue] = useState('');
 
+  const weekKey = getWeekKeyByOffset(weekOffset);
+  const weekDisplay = getWeekDisplay(weekKey);
+  const isCurrentWeek = weekOffset === 0;
+  const currentWeekKey = getWeekKey();
+  const currentWeekDisplay = getWeekDisplay(currentWeekKey);
+
   const showToast = useCallback((msg: string, type: Toast['type'] = 'info') => {
     setToast({ msg, type });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3000);
+    toastTimer.current = setTimeout(() => setToast(null), 2800);
   }, []);
 
   const fetchRecords = useCallback(async () => {
@@ -46,6 +68,11 @@ export default function Page() {
       showToast('所属项目和工作内容不能为空', 'error');
       return;
     }
+    if (!isCurrentWeek) {
+      showToast('只能在当前周添加记录', 'error');
+      setWeekOffset(0);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/record', {
@@ -60,7 +87,6 @@ export default function Page() {
       setProject('');
       setContent('');
       setIssue('');
-      setPreview('');
       await fetchRecords();
       showToast('记录已添加', 'success');
     } catch (err: unknown) {
@@ -73,7 +99,6 @@ export default function Page() {
   async function handleDelete(id: string) {
     try {
       await fetch(`/api/record?id=${id}&week=${weekKey}`, { method: 'DELETE' });
-      setPreview('');
       await fetchRecords();
       showToast('已删除');
     } catch {
@@ -85,7 +110,8 @@ export default function Page() {
     try {
       const res = await fetch(`/api/weekly-report?week=${weekKey}`);
       const data = await res.json();
-      setPreview(data.report || '本周暂无记录');
+      setPreviewText(data.report || '本周暂无记录');
+      setShowModal(true);
     } catch {
       showToast('预览失败', 'error');
     }
@@ -103,7 +129,8 @@ export default function Page() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setPreview(data.report);
+      setPreviewText(data.report);
+      setShowModal(true);
       showToast('周报已发送到企业微信！', 'success');
     } catch (err: unknown) {
       showToast((err as Error).message || '发送失败', 'error');
@@ -112,99 +139,170 @@ export default function Page() {
     }
   }
 
+  async function copyReport() {
+    try {
+      await navigator.clipboard.writeText(previewText);
+      showToast('已复制到剪贴板', 'success');
+    } catch {
+      showToast('复制失败', 'error');
+    }
+  }
+
   return (
-    <div className="container">
-      {/* Header */}
-      <div className="header">
-        <h1>升级运维 · 工作记录</h1>
-        <span className="week-badge">本周 {start} ~ {end}</span>
+    <>
+      <div className="topbar">
+        <span className="topbar-title">升级运维 · 工作记录</span>
+        <span className="topbar-week">{currentWeekDisplay}</span>
       </div>
 
-      {/* Add record form */}
-      <div className="card">
-        <div className="card-title">添加工作记录</div>
-        <form onSubmit={handleAdd}>
-          <div className="form-row">
-            <select value={projectType} onChange={e => setProjectType(e.target.value)}>
-              {VALID_PROJECT_TYPES.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="所属项目（必填）"
-              value={project}
-              onChange={e => setProject(e.target.value)}
-            />
-          </div>
-          <div className="form-row">
-            <textarea
-              placeholder="工作内容（必填）"
-              value={content}
-              onChange={e => setContent(e.target.value)}
-            />
-          </div>
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="遇到的问题（留空则填「无」）"
-              value={issue}
-              onChange={e => setIssue(e.target.value)}
-            />
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ flex: '0 0 auto' }}>
-              {loading && <span className="spinner" />}
-              添加
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Records list */}
-      <div className="card">
-        <div className="card-title">本周记录（{records.length} 条）</div>
-        {records.length === 0 ? (
-          <div className="empty">暂无记录，快来添加今天的工作吧</div>
-        ) : (
-          <div className="record-list">
-            {records.map((r, i) => (
-              <div key={r.id} className="record-item">
-                <span className="record-index">{i + 1}</span>
-                <div className="record-body">
-                  <div className="record-meta">
-                    <span className="tag tag-type">{r.projectType}</span>
-                    <span className="tag tag-project">{r.project}</span>
-                    <span className="tag tag-date">{r.date}</span>
+      <div className="layout">
+        {/* Left: Add form */}
+        <div className="card">
+          <div className="card-head">添加工作记录</div>
+          <form className="form-body" onSubmit={handleAdd}>
+            <div className="form-group">
+              <label className="form-label">项目类型</label>
+              <div className="type-tabs">
+                {VALID_PROJECT_TYPES.map(t => (
+                  <div
+                    key={t}
+                    className={`type-tab${projectType === t ? ' active' : ''}`}
+                    onClick={() => setProjectType(t)}
+                  >
+                    {t}
                   </div>
-                  <div className="record-content">{r.content}</div>
-                  {r.issue && r.issue !== '无' && (
-                    <div className="record-issue">问题：{r.issue}</div>
-                  )}
-                </div>
-                <button className="btn btn-danger" onClick={() => handleDelete(r.id)}>删除</button>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">所属项目</label>
+              <input
+                type="text"
+                placeholder="请输入所属项目名称"
+                value={project}
+                onChange={e => setProject(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">工作内容</label>
+              <textarea
+                placeholder="请描述本次工作内容"
+                value={content}
+                onChange={e => setContent(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">
+                遇到的问题{' '}
+                <span className="form-label-hint">（留空则填「无」）</span>
+              </label>
+              <input
+                type="text"
+                placeholder="描述遇到的问题，无则留空"
+                value={issue}
+                onChange={e => setIssue(e.target.value)}
+              />
+            </div>
+            <div className="form-spacer" />
+            <button type="submit" className="btn-submit" disabled={loading}>
+              {loading && <span className="spinner" />}
+              提交记录
+            </button>
+          </form>
+        </div>
 
-      {/* Preview & Send */}
-      <div className="card">
-        <div className="card-title">周报操作</div>
-        {preview && <div className="report-preview">{preview}</div>}
-        <div className="action-bar">
-          <button className="btn btn-outline" onClick={handlePreview} disabled={records.length === 0}>
-            预览周报
-          </button>
-          <button className="btn btn-green" onClick={handleSend} disabled={sending || records.length === 0}>
-            {sending && <span className="spinner" />}
-            手动发送到企业微信
-          </button>
+        {/* Right: Records */}
+        <div className="right-panel">
+          <div className="card right-card">
+            <div className="week-nav">
+              <div className="week-center">
+                <span className="week-range">{weekDisplay}</span>
+                <span className="week-count">{records.length} 条</span>
+              </div>
+              <div className="week-pill">
+                <button
+                  className="pill-btn"
+                  onClick={() => setWeekOffset(o => o - 1)}
+                  title="上一周"
+                >
+                  ‹
+                </button>
+                <button
+                  className="pill-btn"
+                  onClick={() => setWeekOffset(o => o + 1)}
+                  disabled={weekOffset >= 0}
+                  title="下一周"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+
+            <div className="record-list">
+              {records.length === 0 ? (
+                <div className="record-empty">暂无记录</div>
+              ) : (
+                records.map((r, i) => (
+                  <div key={r.id} className="record-item">
+                    <span className="record-num">{i + 1}</span>
+                    <div className="record-fields">
+                      <div className="record-bubbles">
+                        <span className="bubble bubble-type">{r.projectType}</span>
+                        <span className="bubble bubble-project">{r.project}</span>
+                        <span className="record-divider">|</span>
+                      </div>
+                      <span className="record-content">{r.content}</span>
+                    </div>
+                    <div className="record-right">
+                      <span className={`record-issue${r.issue && r.issue !== '无' ? ' has-issue' : ''}`}>
+                        {r.issue && r.issue !== '无' ? `⚠ ${r.issue}` : '无问题'}
+                      </span>
+                      <button className="btn-del" onClick={() => handleDelete(r.id)} title="删除">
+                        <span>✕</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="action-bar">
+              <button className="btn-preview" onClick={handlePreview} disabled={records.length === 0}>
+                预览周报
+              </button>
+              <button className="btn-send" onClick={handleSend} disabled={sending || records.length === 0}>
+                {sending && <span className="spinner" />}
+                手动发送到企业微信
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {showModal && (
+        <div
+          className="modal-mask"
+          onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}
+        >
+          <div className="modal">
+            <div className="modal-head">
+              <span className="modal-title">周报预览</span>
+              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <button className="modal-copy-btn" onClick={copyReport}>
+                <span>📋</span> 复制全文
+              </button>
+              <div className="modal-pre">{previewText}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className={`toast ${toast.type}`}>{toast.msg}</div>
       )}
-    </div>
+    </>
   );
 }
