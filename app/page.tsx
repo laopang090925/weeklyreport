@@ -10,7 +10,10 @@ function getWeekKeyByOffset(offset: number): string {
   d.setDate(d.getDate() + offset * 7);
   const day = d.getDay();
   d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
-  return d.toISOString().split('T')[0];
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
 }
 
 function getWeekDisplay(weekKey: string): string {
