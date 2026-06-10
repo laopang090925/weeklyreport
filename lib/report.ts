@@ -16,7 +16,11 @@ export function getWeekKey(date = new Date()): string {
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   d.setDate(diff);
-  return d.toISOString().split('T')[0];
+  // 用本地时间格式化，避免 toISOString() 因 UTC 偏差导致日期偏移
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
 }
 
 export function getWeekRange(weekKey: string): { start: string; end: string } {
