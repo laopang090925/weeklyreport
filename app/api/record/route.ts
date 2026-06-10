@@ -22,6 +22,7 @@ async function readRecords(weekKey: string): Promise<WorkRecord[]> {
 
 async function writeRecords(weekKey: string, records: WorkRecord[]): Promise<void> {
   await put(blobPathname(weekKey), JSON.stringify(records), {
+    access: 'public',
     contentType: 'application/json',
     addRandomSuffix: false,
   });
