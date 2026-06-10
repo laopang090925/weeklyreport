@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { formatReport, getWeekKey, readWeekRecords, sendToWecom } from '@/lib/report';
+import { formatReport, getWeekKey } from '@/lib/report';
+import { readWeekRecords, sendToWecom } from '@/lib/server';
 
 function isCronAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;

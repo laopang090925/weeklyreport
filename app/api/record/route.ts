@@ -1,37 +1,11 @@
-import { del, list, put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 import { getWeekKey, WorkRecord } from '@/lib/report';
+import { readWeekRecords, writeWeekRecords, deleteWeekBlob } from '@/lib/server';
 
-const BLOB_PREFIX = 'weekly-records';
-
-function blobPathname(weekKey: string) {
-  return `${BLOB_PREFIX}/${weekKey}.json`;
-}
-
-async function readRecords(weekKey: string): Promise<WorkRecord[]> {
-  try {
-    const { blobs } = await list({ prefix: blobPathname(weekKey) });
-    if (blobs.length === 0) return [];
-    const res = await fetch(blobs[0].downloadUrl, { cache: 'no-store' });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  }
-}
-
-async function writeRecords(weekKey: string, records: WorkRecord[]): Promise<void> {
-  await put(blobPathname(weekKey), JSON.stringify(records), {
-    access: 'public',
-    contentType: 'application/json',
-    addRandomSuffix: false,
-  });
-}
-
-// GET /api/record?week=YYYY-MM-DD  (默认本周)
+// GET /api/record?week=YYYY-MM-DD
 export async function GET(req: NextRequest) {
   const week = req.nextUrl.searchParams.get('week') ?? getWeekKey();
-  const records = await readRecords(week);
+  const records = await readWeekRecords(week);
   return NextResponse.json({ week, records });
 }
 
@@ -45,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   const weekKey = getWeekKey();
-  const records = await readRecords(weekKey);
+  const records = await readWeekRecords(weekKey);
 
   const record: WorkRecord = {
     id: crypto.randomUUID(),
@@ -58,7 +32,7 @@ export async function POST(req: NextRequest) {
   };
 
   records.push(record);
-  await writeRecords(weekKey, records);
+  await writeWeekRecords(weekKey, records);
 
   return NextResponse.json({ record }, { status: 201 });
 }
@@ -70,14 +44,13 @@ export async function DELETE(req: NextRequest) {
 
   if (!id) return NextResponse.json({ error: 'id 必填' }, { status: 400 });
 
-  const records = await readRecords(week);
+  const records = await readWeekRecords(week);
   const filtered = records.filter((r) => r.id !== id);
 
   if (filtered.length === 0) {
-    const { blobs } = await list({ prefix: blobPathname(week) });
-    if (blobs.length > 0) await del(blobs[0].url);
+    await deleteWeekBlob(week);
   } else {
-    await writeRecords(week, filtered);
+    await writeWeekRecords(week, filtered);
   }
 
   return NextResponse.json({ ok: true });
