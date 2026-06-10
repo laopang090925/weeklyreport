@@ -12,7 +12,7 @@ async function readRecords(weekKey: string): Promise<WorkRecord[]> {
   try {
     const { blobs } = await list({ prefix: blobPathname(weekKey) });
     if (blobs.length === 0) return [];
-    const res = await fetch(blobs[0].url, { cache: 'no-store' });
+    const res = await fetch(blobs[0].downloadUrl, { cache: 'no-store' });
     if (!res.ok) return [];
     return await res.json();
   } catch {
@@ -22,7 +22,6 @@ async function readRecords(weekKey: string): Promise<WorkRecord[]> {
 
 async function writeRecords(weekKey: string, records: WorkRecord[]): Promise<void> {
   await put(blobPathname(weekKey), JSON.stringify(records), {
-    access: 'public',
     contentType: 'application/json',
     addRandomSuffix: false,
   });
