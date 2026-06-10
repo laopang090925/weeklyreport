@@ -46,6 +46,19 @@ export function formatReport(records: WorkRecord[], reportDate: string): string 
   return lines.join('\n');
 }
 
+export async function readWeekRecords(weekKey: string): Promise<WorkRecord[]> {
+  const { list } = await import('@vercel/blob');
+  try {
+    const { blobs } = await list({ prefix: `weekly-records/${weekKey}.json` });
+    if (blobs.length === 0) return [];
+    const res = await fetch(blobs[0].downloadUrl, { cache: 'no-store' });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 export async function sendToWecom(text: string): Promise<void> {
   const webhookUrl = process.env.WECOM_WEBHOOK_URL;
   if (!webhookUrl) throw new Error('WECOM_WEBHOOK_URL 未配置');
