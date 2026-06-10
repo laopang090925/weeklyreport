@@ -9,18 +9,12 @@ export function blobPathname(weekKey: string) {
 
 export async function readWeekRecords(weekKey: string): Promise<WorkRecord[]> {
   try {
-    const prefix = blobPathname(weekKey);
-    const { blobs } = await list({ prefix });
-    console.log(`[readWeekRecords] prefix=${prefix} found=${blobs.length}`);
+    const { blobs } = await list({ prefix: blobPathname(weekKey) });
     if (blobs.length === 0) return [];
     const res = await fetch(blobs[0].downloadUrl, { cache: 'no-store' });
-    console.log(`[readWeekRecords] fetch status=${res.status}`);
     if (!res.ok) return [];
-    const data = await res.json();
-    console.log(`[readWeekRecords] records=${data.length}`);
-    return data;
-  } catch (e) {
-    console.error('[readWeekRecords] error:', e);
+    return await res.json();
+  } catch {
     return [];
   }
 }
