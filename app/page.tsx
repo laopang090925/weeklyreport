@@ -35,6 +35,7 @@ export default function Page() {
   const [showModal, setShowModal] = useState(false);
   const [previewText, setPreviewText] = useState('');
   const [weekOffset, setWeekOffset] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   // form state
@@ -108,14 +109,16 @@ export default function Page() {
   }
 
   async function handleDelete(id: string) {
-    setRecords(prev => prev.filter(r => r.id !== id));
-    showToast('已删除');
+    setDeletingId(id);
     try {
       const res = await fetch(`/api/record?id=${id}&week=${weekKey}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
+      setRecords(prev => prev.filter(r => r.id !== id));
+      showToast('已删除');
     } catch {
-      await fetchRecords();
-      showToast('删除失败，已还原', 'error');
+      showToast('删除失败，请重试', 'error');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -275,8 +278,16 @@ export default function Page() {
                       <span className={`record-issue${r.issue && r.issue !== '无' ? ' has-issue' : ''}`}>
                         {r.issue && r.issue !== '无' ? `⚠ ${r.issue}` : '无问题'}
                       </span>
-                      <button className="btn-del" onClick={() => handleDelete(r.id)} title="删除">
-                        <span>✕</span>
+                      <button
+                        className="btn-del"
+                        onClick={() => handleDelete(r.id)}
+                        disabled={deletingId === r.id}
+                        title="删除"
+                      >
+                        {deletingId === r.id
+                          ? <span className="spinner" style={{ borderColor: 'rgba(239,68,68,.3)', borderTopColor: '#EF4444', width: 10, height: 10, borderWidth: 1.5 }} />
+                          : <span>✕</span>
+                        }
                       </button>
                     </div>
                   </div>
