@@ -56,10 +56,7 @@ export default function Page() {
   }, []);
 
   const fetchRecords = useCallback(async (showWeekLoading = false) => {
-    if (showWeekLoading) {
-      setRecords([]);
-      setWeekLoading(true);
-    }
+    if (showWeekLoading) setWeekLoading(true);
     try {
       const res = await fetch(`/api/record?week=${weekKey}`);
       const data = await res.json();
@@ -268,11 +265,12 @@ export default function Page() {
             </div>
 
             <div className="record-list">
-              {weekLoading || deletingId !== null ? (
-                <div className="record-empty">
-                  <span className="spinner" style={{ borderColor: 'rgba(0,0,0,.15)', borderTopColor: 'var(--blue)', width: 20, height: 20 }} />
+              {(weekLoading || deletingId !== null) && (
+                <div className="loading-overlay">
+                  <div className="loading-dots"><span /><span /><span /></div>
                 </div>
-              ) : records.length === 0 ? (
+              )}
+              {records.length === 0 ? (
                 <div className="record-empty">暂无记录</div>
               ) : (
                 records.map((r, i) => (

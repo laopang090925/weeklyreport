@@ -159,7 +159,30 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 .pill-btn:disabled { opacity: .35; cursor: not-allowed; }
 
 /* ── RECORD LIST ── */
-.record-list { flex: 1; min-height: 0; padding: 8px 12px 12px; overflow-y: auto; }
+.record-list { flex: 1; min-height: 0; padding: 8px 12px 12px; overflow-y: auto; position: relative; }
+
+/* ── LOADING OVERLAY ── */
+.loading-overlay {
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(1px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10; border-radius: 0 0 var(--radius) var(--radius);
+}
+.loading-dots { display: flex; align-items: center; gap: 7px; }
+.loading-dots span {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--blue);
+  display: block;
+  animation: dotBounce 1.3s ease-in-out infinite both;
+}
+.loading-dots span:nth-child(1) { animation-delay: 0s; }
+.loading-dots span:nth-child(2) { animation-delay: .18s; }
+.loading-dots span:nth-child(3) { animation-delay: .36s; }
+@keyframes dotBounce {
+  0%, 60%, 100% { transform: translateY(0) scale(.85); opacity: .45; }
+  30%           { transform: translateY(-9px) scale(1); opacity: 1; }
+}
 .record-empty {
   text-align: center; color: var(--text-light);
   padding: 48px 0; font-size: 14px;
