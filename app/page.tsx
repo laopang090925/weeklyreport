@@ -36,6 +36,7 @@ export default function Page() {
   const [previewText, setPreviewText] = useState('');
   const [weekOffset, setWeekOffset] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   // form state
@@ -96,10 +97,11 @@ export default function Page() {
         const d = await res.json();
         throw new Error(d.error);
       }
+      const { record } = await res.json();
+      setRecords(prev => [...prev, record]);
       setProject('');
       setContent('');
       setIssue('');
-      await fetchRecords();
       showToast('记录已添加', 'success');
     } catch (err: unknown) {
       showToast((err as Error).message || '添加失败', 'error');
@@ -119,6 +121,19 @@ export default function Page() {
       showToast('删除失败，请重试', 'error');
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      const res = await fetch(`/api/record?week=${weekKey}`);
+      const data = await res.json();
+      setRecords(data.records ?? []);
+    } catch {
+      showToast('刷新失败', 'error');
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -296,6 +311,17 @@ export default function Page() {
             </div>
 
             <div className="action-bar">
+              <button
+                className="btn-refresh-icon"
+                onClick={handleRefresh}
+                disabled={refreshing || weekLoading}
+                title="刷新记录"
+              >
+                {refreshing
+                  ? <span className="spinner" style={{ borderColor: 'rgba(0,0,0,.15)', borderTopColor: 'var(--blue)', width: 14, height: 14 }} />
+                  : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                }
+              </button>
               <button className="btn-preview" onClick={handlePreview} disabled={records.length === 0}>
                 预览周报
               </button>

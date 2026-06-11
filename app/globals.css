@@ -238,6 +238,20 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 .btn-send:hover:not(:disabled) { background: #05974A; }
 .btn-send:disabled { opacity: .5; cursor: not-allowed; }
 
+/* ── REFRESH ICON BUTTON ── */
+.btn-refresh-icon {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: #fff; color: var(--text-sub);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+  margin-right: auto;
+}
+.btn-refresh-icon:hover:not(:disabled) {
+  border-color: var(--blue); color: var(--blue); background: var(--blue-bg);
+}
+.btn-refresh-icon:disabled { opacity: .5; cursor: not-allowed; }
+
 /* ── MODAL ── */
 .modal-mask {
   position: fixed; inset: 0;
