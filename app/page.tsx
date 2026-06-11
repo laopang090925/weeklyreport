@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { VALID_PROJECT_TYPES, WorkRecord, getWeekKey } from '@/lib/report';
+import { VALID_PROJECT_TYPES, WorkRecord } from '@/lib/report';
 
 interface Toast { msg: string; type: 'success' | 'error' | 'info' }
 
@@ -48,8 +48,6 @@ export default function Page() {
   const weekKey = getWeekKeyByOffset(weekOffset);
   const weekDisplay = getWeekDisplay(weekKey);
   const isCurrentWeek = weekOffset === 0;
-  const currentWeekKey = getWeekKey();
-  const currentWeekDisplay = getWeekDisplay(currentWeekKey);
 
   const showToast = useCallback((msg: string, type: Toast['type'] = 'info') => {
     setToast({ msg, type });
@@ -182,8 +180,7 @@ export default function Page() {
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">升级运维 · 工作记录</span>
-        <span className="topbar-week">{currentWeekDisplay}</span>
+        <span className="topbar-title">企业班车/护驾项目组工作记录</span>
       </div>
 
       <div className="layout">
@@ -286,13 +283,13 @@ export default function Page() {
                         <span className="bubble bubble-type">{r.projectType}</span>
                         <span className="bubble bubble-project">{r.project}</span>
                         <span className="record-divider">|</span>
+                        <span className={`record-issue${r.issue && r.issue !== '无' ? ' has-issue' : ''}`}>
+                          {r.issue && r.issue !== '无' ? `⚠ ${r.issue}` : '无问题'}
+                        </span>
                       </div>
                       <span className="record-content">{r.content}</span>
                     </div>
                     <div className="record-right">
-                      <span className={`record-issue${r.issue && r.issue !== '无' ? ' has-issue' : ''}`}>
-                        {r.issue && r.issue !== '无' ? `⚠ ${r.issue}` : '无问题'}
-                      </span>
                       <button
                         className="btn-del"
                         onClick={() => handleDelete(r.id)}

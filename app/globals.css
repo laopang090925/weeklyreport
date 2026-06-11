@@ -34,15 +34,10 @@ body {
   height: 56px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   flex-shrink: 0;
 }
 .topbar-title { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
-.topbar-week {
-  font-size: 13px; color: var(--blue);
-  background: var(--blue-bg); padding: 4px 12px;
-  border-radius: 20px; font-weight: 600;
-}
 
 /* ── LAYOUT ── */
 .layout {
