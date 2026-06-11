@@ -1,4 +1,4 @@
-import { list, put, del } from '@vercel/blob';
+import { list, put } from '@vercel/blob';
 import { WorkRecord } from './report';
 
 const BLOB_PREFIX = 'weekly-records';
@@ -12,9 +12,12 @@ export async function readWeekRecords(weekKey: string): Promise<WorkRecord[]> {
   try {
     const { blobs } = await list({ prefix: blobPathname(weekKey) });
     if (blobs.length === 0) return [];
-    const res = await fetch(blobs[0].downloadUrl, { cache: 'no-store' });
+    // 加时间戳绕过 Vercel Blob CDN 的 immutable 缓存
+    const url = `${blobs[0].downloadUrl}?_t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) return [];
-    return await res.json();
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
   } catch {
     return [];
   }
@@ -26,11 +29,6 @@ export async function writeWeekRecords(weekKey: string, records: WorkRecord[]): 
     contentType: 'application/json',
     addRandomSuffix: false,
   });
-}
-
-export async function deleteWeekBlob(weekKey: string): Promise<void> {
-  const { blobs } = await list({ prefix: blobPathname(weekKey) });
-  if (blobs.length > 0) await del(blobs[0].url);
 }
 
 export async function sendToWecom(text: string): Promise<void> {

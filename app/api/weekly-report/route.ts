@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { formatReport, getWeekKey } from '@/lib/report';
+import { formatReport, getWeekKey, getBeijingDateStr } from '@/lib/report';
 import { readWeekRecords, sendToWecom } from '@/lib/server';
+
+export const dynamic = 'force-dynamic';
 
 function isCronAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '本周暂无工作记录' }, { status: 400 });
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getBeijingDateStr();
   const report = formatReport(records, today);
 
   await sendToWecom(report);
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const week = req.nextUrl.searchParams.get('week') ?? getWeekKey();
   const records = await readWeekRecords(week);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getBeijingDateStr();
   const report = formatReport(records, today);
   return NextResponse.json({ week, report, count: records.length });
 }

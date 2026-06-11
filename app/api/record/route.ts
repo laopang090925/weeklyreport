@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getWeekKey, WorkRecord } from '@/lib/report';
-import { readWeekRecords, writeWeekRecords, deleteWeekBlob } from '@/lib/server';
+import { getWeekKey, getBeijingDateStr, WorkRecord } from '@/lib/report';
+import { readWeekRecords, writeWeekRecords } from '@/lib/server';
+
+export const dynamic = 'force-dynamic';
 
 // GET /api/record?week=YYYY-MM-DD
 export async function GET(req: NextRequest) {
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   const record: WorkRecord = {
     id: crypto.randomUUID(),
-    date: new Date().toISOString().split('T')[0],
+    date: getBeijingDateStr(),
     projectType: projectType ?? '其他',
     project: project.trim(),
     content: content.trim(),
@@ -47,11 +49,7 @@ export async function DELETE(req: NextRequest) {
   const records = await readWeekRecords(week);
   const filtered = records.filter((r) => r.id !== id);
 
-  if (filtered.length === 0) {
-    await deleteWeekBlob(week);
-  } else {
-    await writeWeekRecords(week, filtered);
-  }
+  await writeWeekRecords(week, filtered);
 
   return NextResponse.json({ ok: true });
 }

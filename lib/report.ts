@@ -12,14 +12,25 @@ export const VALID_PROJECT_TYPES = ['企业班车', '交通护驾', '大问号',
 export type ProjectType = typeof VALID_PROJECT_TYPES[number];
 
 export function getWeekKey(date = new Date()): string {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  // 用本地时间格式化，避免 toISOString() 因 UTC 偏差导致日期偏移
-  const y  = d.getFullYear();
-  const m  = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+  // 显式偏移到北京时间 UTC+8，确保服务端（UTC）和客户端行为一致
+  const bjMs = date.getTime() + 8 * 60 * 60 * 1000;
+  const d = new Date(bjMs);
+  const day = d.getUTCDay();
+  const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1);
+  d.setUTCDate(diff);
+  const y  = d.getUTCFullYear();
+  const m  = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+// 返回北京当前日期字符串 YYYY-MM-DD
+export function getBeijingDateStr(date = new Date()): string {
+  const bjMs = date.getTime() + 8 * 60 * 60 * 1000;
+  const d = new Date(bjMs);
+  const y  = d.getUTCFullYear();
+  const m  = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${dd}`;
 }
 

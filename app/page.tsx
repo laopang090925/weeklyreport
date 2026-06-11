@@ -6,22 +6,23 @@ import { VALID_PROJECT_TYPES, WorkRecord, getWeekKey } from '@/lib/report';
 interface Toast { msg: string; type: 'success' | 'error' | 'info' }
 
 function getWeekKeyByOffset(offset: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + offset * 7);
-  const day = d.getDay();
-  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
-  const y  = d.getFullYear();
-  const m  = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+  // 显式使用 UTC+8（北京时间），与服务端 getWeekKey 保持一致
+  const bjMs = Date.now() + 8 * 60 * 60 * 1000 + offset * 7 * 24 * 60 * 60 * 1000;
+  const d = new Date(bjMs);
+  const day = d.getUTCDay();
+  d.setUTCDate(d.getUTCDate() - day + (day === 0 ? -6 : 1));
+  const y  = d.getUTCFullYear();
+  const m  = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${dd}`;
 }
 
 function getWeekDisplay(weekKey: string): string {
-  const mon = new Date(weekKey + 'T00:00:00');
-  const fri = new Date(weekKey + 'T00:00:00');
-  fri.setDate(mon.getDate() + 4);
+  // weekKey 是 YYYY-MM-DD 日历日期，用 UTC midnight 解析后用 UTC 方法取值
+  const mon = new Date(weekKey + 'T00:00:00Z');
+  const fri = new Date(mon.getTime() + 4 * 24 * 60 * 60 * 1000);
   const dot = (d: Date) =>
-    `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+    `${d.getUTCFullYear()}.${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}`;
   return `${dot(mon)} - ${dot(fri)}`;
 }
 
@@ -55,7 +56,10 @@ export default function Page() {
   }, []);
 
   const fetchRecords = useCallback(async (showWeekLoading = false) => {
-    if (showWeekLoading) setWeekLoading(true);
+    if (showWeekLoading) {
+      setRecords([]);
+      setWeekLoading(true);
+    }
     try {
       const res = await fetch(`/api/record?week=${weekKey}`);
       const data = await res.json();
