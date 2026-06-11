@@ -200,7 +200,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   flex-shrink: 0; display: flex; align-items: center;
   gap: 8px; padding-left: 16px;
 }
-.record-issue { font-size: 12px; color: var(--text-light); white-space: nowrap; }
+.record-issue { font-size: 13px; color: var(--text-light); white-space: nowrap; }
 .record-issue.has-issue { color: #D97706; }
 .btn-del {
   width: 22px; height: 22px; flex-shrink: 0;

@@ -268,7 +268,7 @@ export default function Page() {
             </div>
 
             <div className="record-list">
-              {weekLoading ? (
+              {weekLoading || deletingId !== null ? (
                 <div className="record-empty">
                   <span className="spinner" style={{ borderColor: 'rgba(0,0,0,.15)', borderTopColor: 'var(--blue)', width: 20, height: 20 }} />
                 </div>
@@ -293,13 +293,10 @@ export default function Page() {
                       <button
                         className="btn-del"
                         onClick={() => handleDelete(r.id)}
-                        disabled={deletingId === r.id}
+                        disabled={deletingId !== null}
                         title="删除"
                       >
-                        {deletingId === r.id
-                          ? <span className="spinner" style={{ borderColor: 'rgba(239,68,68,.3)', borderTopColor: '#EF4444', width: 10, height: 10, borderWidth: 1.5 }} />
-                          : <span>✕</span>
-                        }
+                        <span>✕</span>
                       </button>
                     </div>
                   </div>
