@@ -265,7 +265,7 @@ export default function Page() {
             </div>
 
             <div className="record-list">
-              {(weekLoading || deletingId !== null) && (
+              {(weekLoading || deletingId !== null || loading) && (
                 <div className="loading-overlay">
                   <div className="loading-dots"><span /><span /><span /></div>
                 </div>
