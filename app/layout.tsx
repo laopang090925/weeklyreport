@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '升级运维 · 工作记录',
+  title: '周报记录',
   description: '每日工作记录与周报生成',
+  icons: { icon: '/favicon.jpg' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

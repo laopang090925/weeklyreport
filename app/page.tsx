@@ -6,7 +6,6 @@ import { VALID_PROJECT_TYPES, WorkRecord } from '@/lib/report';
 interface Toast { msg: string; type: 'success' | 'error' | 'info' }
 
 function getWeekKeyByOffset(offset: number): string {
-  // 显式使用 UTC+8（北京时间），与服务端 getWeekKey 保持一致
   const bjMs = Date.now() + 8 * 60 * 60 * 1000 + offset * 7 * 24 * 60 * 60 * 1000;
   const d = new Date(bjMs);
   const day = d.getUTCDay();
@@ -18,7 +17,6 @@ function getWeekKeyByOffset(offset: number): string {
 }
 
 function getWeekDisplay(weekKey: string): string {
-  // weekKey 是 YYYY-MM-DD 日历日期，用 UTC midnight 解析后用 UTC 方法取值
   const mon = new Date(weekKey + 'T00:00:00Z');
   const fri = new Date(mon.getTime() + 4 * 24 * 60 * 60 * 1000);
   const dot = (d: Date) =>
@@ -34,12 +32,12 @@ export default function Page() {
   const [toast, setToast] = useState<Toast | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [previewText, setPreviewText] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
-  // form state
   const [projectType, setProjectType] = useState<string>(VALID_PROJECT_TYPES[0]);
   const [project, setProject] = useState('');
   const [content, setContent] = useState('');
@@ -133,13 +131,18 @@ export default function Page() {
   }
 
   async function handlePreview() {
+    setPreviewText('');
+    setPreviewLoading(true);
+    setShowModal(true);
     try {
       const res = await fetch(`/api/weekly-report?week=${weekKey}`);
       const data = await res.json();
       setPreviewText(data.report || '本周暂无记录');
-      setShowModal(true);
     } catch {
       showToast('预览失败', 'error');
+      setShowModal(false);
+    } finally {
+      setPreviewLoading(false);
     }
   }
 
@@ -185,6 +188,13 @@ export default function Page() {
         <div className="card">
           <div className="card-head">添加工作记录</div>
           <form className="form-body" onSubmit={handleAdd}>
+
+            {/* 截止时间提醒 */}
+            <div className="deadline-notice">
+              <span>⏰</span>
+              <span>周期内录入工作记录截止到每周五 17:00</span>
+            </div>
+
             <div className="form-group">
               <label className="form-label">项目类型</label>
               <div className="type-tabs">
@@ -211,24 +221,24 @@ export default function Page() {
             <div className="form-group">
               <label className="form-label">工作内容</label>
               <textarea
+                className="content-area"
                 placeholder="请描述本次工作内容"
                 value={content}
                 onChange={e => setContent(e.target.value)}
               />
             </div>
             <div className="form-group">
-              <label className="form-label">
-                遇到的问题{' '}
-                <span className="form-label-hint">（留空则填「无」）</span>
-              </label>
-              <input
-                type="text"
+              <label className="form-label">遇到的问题</label>
+              <textarea
+                className="issue-area"
                 placeholder="描述遇到的问题，无则留空"
                 value={issue}
                 onChange={e => setIssue(e.target.value)}
               />
             </div>
             <div className="form-spacer" />
+            {/* 推送逻辑提示 */}
+            <div className="push-notice">📅 每周五 18:00 自动推送至企微群</div>
             <button type="submit" className="btn-submit" disabled={loading}>
               {loading && <span className="spinner" />}
               提交记录
@@ -338,10 +348,19 @@ export default function Page() {
               <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <div className="modal-body">
-              <button className="modal-copy-btn" onClick={copyReport}>
-                <span>📋</span> 复制全文
-              </button>
-              <div className="modal-pre">{previewText}</div>
+              {previewLoading ? (
+                <div className="modal-loading">
+                  <div className="modal-spinner" />
+                  <span>生成中…</span>
+                </div>
+              ) : (
+                <>
+                  <button className="modal-copy-btn" onClick={copyReport}>
+                    <span>📋</span> 复制全文
+                  </button>
+                  <div className="modal-pre">{previewText}</div>
+                </>
+              )}
             </div>
           </div>
         </div>

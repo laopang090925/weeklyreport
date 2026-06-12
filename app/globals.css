@@ -108,6 +108,37 @@ input[type="text"], textarea {
 }
 input[type="text"]:focus, textarea:focus { border-color: var(--blue); background: #fff; }
 textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+textarea.content-area { min-height: 133px; }
+textarea.issue-area   { min-height: 80px; }
+
+/* ── DEADLINE NOTICE ── */
+.deadline-notice {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: #FFF8E6; color: #D97706;
+  border: 1.5px solid #FDE68A; border-radius: 8px;
+  padding: 9px 13px; font-size: 12.5px; font-weight: 600;
+  margin-bottom: 16px; line-height: 1.5;
+}
+
+/* ── PUSH NOTICE ── */
+.push-notice {
+  background: #F0F9FF; color: #0369A1;
+  border: 1.5px solid #BAE6FD; border-radius: 8px;
+  padding: 9px 13px; font-size: 12.5px; font-weight: 600;
+  margin-bottom: 12px; text-align: center;
+}
+
+/* ── MODAL LOADING ── */
+.modal-loading {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 48px 20px; color: var(--text-sub); font-size: 14px;
+}
+.modal-spinner {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--blue);
+  animation: spin .7s linear infinite; flex-shrink: 0;
+}
 
 .form-spacer { flex: 1; }
 .btn-submit {
