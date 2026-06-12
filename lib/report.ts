@@ -54,7 +54,6 @@ export function formatReport(records: WorkRecord[], reportDate: string): string 
     ...records.map((r, i) =>
       `${i + 1}. ${normalizeProjectType(r.projectType)}｜${r.project}｜${r.content}｜${r.issue || '无'}`
     ),
-    '@软件团队小助手',
   ];
   return lines.join('\n');
 }
