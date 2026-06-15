@@ -265,7 +265,7 @@ textarea.issue-area   { min-height: 80px; }
 
 /* ── RIGHT PANEL ── */
 .right-panel { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-.right-card { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.right-card { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
 /* ── WEEK NAV ── */
 .week-nav {
@@ -404,26 +404,23 @@ textarea.issue-area   { min-height: 80px; }
 .btn-send:hover:not(:disabled) { background: #05974A; }
 .btn-send:disabled { opacity: .5; cursor: not-allowed; }
 .btn-import {
-  padding: 9px 20px; border: 1.5px solid var(--blue);
-  background: #fff; color: var(--blue); border-radius: 8px;
+  padding: 9px 20px; border: 1.5px solid #0D9488;
+  background: #fff; color: #0D9488; border-radius: 8px;
   font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
   margin-right: auto;
 }
-.btn-import:hover:not(:disabled) { background: var(--blue-bg); }
+.btn-import:hover:not(:disabled) { background: #F0FDFA; }
 .btn-import:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ── REFRESH ICON BUTTON ── */
 .btn-refresh-icon {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 1.5px solid var(--border);
-  background: #fff; color: var(--text-sub);
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: none; color: #3D3D3D;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all .15s; flex-shrink: 0;
+  transition: all .15s; flex-shrink: 0; padding: 0;
 }
-.btn-refresh-icon:hover:not(:disabled) {
-  border-color: var(--blue); color: var(--blue); background: var(--blue-bg);
-}
-.btn-refresh-icon:disabled { opacity: .5; cursor: not-allowed; }
+.btn-refresh-icon:hover:not(:disabled) { color: var(--blue); }
+.btn-refresh-icon:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ── MODAL ── */
 .modal-mask {

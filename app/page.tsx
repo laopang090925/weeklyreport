@@ -383,6 +383,11 @@ export default function Page() {
         {/* Right: Records */}
         <div className="right-panel">
           <div className="card right-card">
+            {(weekLoading || deletingId !== null || loading) && (
+              <div className="loading-overlay">
+                <div className="loading-dots"><span /><span /><span /></div>
+              </div>
+            )}
             <div className="week-nav">
               <div className="week-center">
                 <span className="week-range">{weekDisplay}</span>
@@ -394,8 +399,8 @@ export default function Page() {
                   title="刷新记录"
                 >
                   {refreshing
-                    ? <span className="spinner" style={{ borderColor: 'rgba(0,0,0,.15)', borderTopColor: 'var(--blue)', width: 14, height: 14 }} />
-                    : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                    ? <span className="spinner" style={{ borderColor: 'rgba(0,0,0,.15)', borderTopColor: '#3D3D3D', width: 16, height: 16 }} />
+                    : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.636-6.364"/><path d="M21 3v5h-5"/></svg>
                   }
                 </button>
               </div>
@@ -420,11 +425,6 @@ export default function Page() {
             </div>
 
             <div className="record-list">
-              {(weekLoading || deletingId !== null || loading) && (
-                <div className="loading-overlay">
-                  <div className="loading-dots"><span /><span /><span /></div>
-                </div>
-              )}
               {records.length === 0 ? (
                 <div className="record-empty">暂无记录</div>
               ) : (
