@@ -25,6 +25,7 @@ export default function LoginPage({ onLogin }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       localStorage.setItem('weeklyreport_user', data.username);
+      localStorage.setItem('weeklyreport_login_at', String(Date.now()));
       onLogin(data.username);
     } catch (err: unknown) {
       setError((err as Error).message || '密码错误');

@@ -31,7 +31,14 @@ export default function Page() {
 
   useEffect(() => {
     const stored = localStorage.getItem('weeklyreport_user');
-    setCurrentUser(stored);
+    const loginAt = localStorage.getItem('weeklyreport_login_at');
+    const expired = !loginAt || Date.now() - Number(loginAt) > 7 * 24 * 60 * 60 * 1000;
+    if (stored && !expired) {
+      setCurrentUser(stored);
+    } else {
+      localStorage.removeItem('weeklyreport_user');
+      localStorage.removeItem('weeklyreport_login_at');
+    }
     setAuthChecked(true);
   }, []);
 
@@ -296,6 +303,7 @@ export default function Page() {
 
   function handleLogout() {
     localStorage.removeItem('weeklyreport_user');
+    localStorage.removeItem('weeklyreport_login_at');
     setCurrentUser(null);
   }
 
