@@ -430,6 +430,15 @@ export default function Page() {
                         </span>
                       </div>
                       <span className="record-content">{r.content}</span>
+                      {(r.author || r.createdAt) && (
+                        <span className="record-meta">
+                          {r.author && <span>{r.author}</span>}
+                          {r.author && r.createdAt && <span className="record-meta-dot">·</span>}
+                          {r.createdAt && (
+                            <span>{new Date(r.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                          )}
+                        </span>
+                      )}
                     </div>
                     <div className="record-right">
                       <button
