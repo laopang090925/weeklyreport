@@ -55,7 +55,6 @@ export function formatReport(records: WorkRecord[], reportDate: string): string 
     ...records.map((r, i) =>
       `${i + 1}. ${normalizeProjectType(r.projectType)}｜${r.project}｜${r.content}｜${r.issue || '无'}`
     ),
-    '@张达奇',
   ];
   return lines.join('\n');
 }
