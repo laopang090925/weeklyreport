@@ -404,11 +404,12 @@ textarea.issue-area   { min-height: 80px; }
 .btn-send:hover:not(:disabled) { background: #05974A; }
 .btn-send:disabled { opacity: .5; cursor: not-allowed; }
 .btn-import {
-  padding: 9px 20px; border: 1.5px solid var(--border);
-  background: #fff; color: var(--text-sub); border-radius: 8px;
+  padding: 9px 20px; border: 1.5px solid var(--blue);
+  background: #fff; color: var(--blue); border-radius: 8px;
   font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
+  margin-right: auto;
 }
-.btn-import:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+.btn-import:hover:not(:disabled) { background: var(--blue-bg); }
 .btn-import:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ── REFRESH ICON BUTTON ── */
@@ -418,7 +419,6 @@ textarea.issue-area   { min-height: 80px; }
   background: #fff; color: var(--text-sub);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all .15s; flex-shrink: 0;
-  margin-right: auto;
 }
 .btn-refresh-icon:hover:not(:disabled) {
   border-color: var(--blue); color: var(--blue); background: var(--blue-bg);
