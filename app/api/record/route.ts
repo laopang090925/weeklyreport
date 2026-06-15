@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 // POST /api/record  body: { projectType, project, content, issue }
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { projectType, project, content, issue } = body;
+  const { projectType, project, content, issue, author } = body;
 
   if (!project?.trim() || !content?.trim()) {
     return NextResponse.json({ error: '所属项目和工作内容不能为空' }, { status: 400 });
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     project: project.trim(),
     content: content.trim(),
     issue: issue?.trim() || '无',
+    author: author?.trim() || undefined,
     createdAt: new Date().toISOString(),
   };
 

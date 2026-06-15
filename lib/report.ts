@@ -5,6 +5,7 @@ export interface WorkRecord {
   project: string;
   content: string;
   issue: string;
+  author?: string;
   createdAt: string;
 }
 

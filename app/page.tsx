@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VALID_PROJECT_TYPES, WorkRecord } from '@/lib/report';
+import LoginPage from './LoginPage';
 
 interface Toast { msg: string; type: 'success' | 'error' | 'info' }
 
@@ -25,6 +26,15 @@ function getWeekDisplay(weekKey: string): string {
 }
 
 export default function Page() {
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('weeklyreport_user');
+    setCurrentUser(stored);
+    setAuthChecked(true);
+  }, []);
+
   const [records, setRecords] = useState<WorkRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [weekLoading, setWeekLoading] = useState(false);
@@ -95,7 +105,7 @@ export default function Page() {
       const res = await fetch('/api/record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectType, project, content, issue: issue || '无' }),
+        body: JSON.stringify({ projectType, project, content, issue: issue || '无', author: currentUser ?? undefined }),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -252,7 +262,7 @@ export default function Page() {
         const res = await fetch('/api/record', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item),
+          body: JSON.stringify({ ...item, author: currentUser ?? undefined }),
         });
         if (!res.ok) {
           const d = await res.json();
@@ -281,10 +291,22 @@ export default function Page() {
     }
   }
 
+  if (!authChecked) return null;
+  if (!currentUser) return <LoginPage onLogin={setCurrentUser} />;
+
+  function handleLogout() {
+    localStorage.removeItem('weeklyreport_user');
+    setCurrentUser(null);
+  }
+
   return (
     <>
       <div className="topbar">
         <span className="topbar-title">企业班车/护驾项目组工作记录</span>
+        <div className="topbar-user">
+          <span className="topbar-username">{currentUser}</span>
+          <button className="btn-logout" onClick={handleLogout}>退出</button>
+        </div>
       </div>
 
       <div className="layout">
