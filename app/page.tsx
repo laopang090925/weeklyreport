@@ -47,6 +47,13 @@ export default function Page() {
   const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
 
+  const [editingRecord, setEditingRecord] = useState<WorkRecord | null>(null);
+  const [editProjectType, setEditProjectType] = useState('');
+  const [editProject, setEditProject] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editIssue, setEditIssue] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+
   const weekKey = getWeekKeyByOffset(weekOffset);
   const weekDisplay = getWeekDisplay(weekKey);
   const isCurrentWeek = weekOffset === 0;
@@ -169,6 +176,49 @@ export default function Page() {
       showToast((err as Error).message || '发送失败', 'error');
     } finally {
       setSending(false);
+    }
+  }
+
+  function openEdit(r: WorkRecord) {
+    setEditingRecord(r);
+    setEditProjectType(r.projectType);
+    setEditProject(r.project);
+    setEditContent(r.content);
+    setEditIssue(r.issue === '无' ? '' : r.issue);
+  }
+
+  async function handleEditSave() {
+    if (!editingRecord) return;
+    if (!editProject.trim() || !editContent.trim()) {
+      showToast('所属项目和工作内容不能为空', 'error');
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const res = await fetch('/api/record', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingRecord.id,
+          week: weekKey,
+          projectType: editProjectType,
+          project: editProject,
+          content: editContent,
+          issue: editIssue || '无',
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error);
+      }
+      const { record } = await res.json();
+      setRecords(prev => prev.map(r => r.id === record.id ? record : r));
+      showToast('记录已更新', 'success');
+      setEditingRecord(null);
+    } catch (err: unknown) {
+      showToast((err as Error).message || '保存失败', 'error');
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -353,6 +403,14 @@ export default function Page() {
                     </div>
                     <div className="record-right">
                       <button
+                        className="btn-edit"
+                        onClick={() => openEdit(r)}
+                        disabled={deletingId !== null}
+                        title="编辑"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button
                         className="btn-del"
                         onClick={() => handleDelete(r.id)}
                         disabled={deletingId !== null}
@@ -392,6 +450,72 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingRecord && (
+        <div
+          className="modal-mask"
+          onClick={e => { if (e.target === e.currentTarget) setEditingRecord(null); }}
+        >
+          <div className="modal edit-modal">
+            <div className="modal-head">
+              <span className="modal-title">编辑工作记录</span>
+              <button className="modal-close" onClick={() => setEditingRecord(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">项目类型</label>
+                <div className="type-tabs">
+                  {VALID_PROJECT_TYPES.map(t => (
+                    <div
+                      key={t}
+                      className={`type-tab${editProjectType === t ? ' active' : ''}`}
+                      onClick={() => setEditProjectType(t)}
+                    >
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">所属项目</label>
+                <input
+                  type="text"
+                  placeholder="请输入所属项目名称"
+                  value={editProject}
+                  onChange={e => setEditProject(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">工作内容</label>
+                <textarea
+                  className="content-area"
+                  placeholder="请描述本次工作内容"
+                  value={editContent}
+                  onChange={e => setEditContent(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">遇到的问题</label>
+                <textarea
+                  className="issue-area"
+                  placeholder="描述遇到的问题，无则留空"
+                  value={editIssue}
+                  onChange={e => setEditIssue(e.target.value)}
+                />
+              </div>
+              <button
+                className="btn-edit-save"
+                onClick={handleEditSave}
+                disabled={editSaving}
+              >
+                {editSaving && <span className="spinner" />}
+                保存修改
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Import Modal */}
       {showImportModal && (

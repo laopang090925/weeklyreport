@@ -357,6 +357,29 @@ textarea.issue-area   { min-height: 80px; }
   max-height: 360px; overflow-y: auto;
 }
 
+/* ── EDIT BUTTON ── */
+.btn-edit {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1.5px solid var(--border); background: #fff;
+  color: var(--text-sub); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+}
+.btn-edit:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+.btn-edit:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ── EDIT MODAL ── */
+.edit-modal { width: 480px; }
+.btn-edit-save {
+  width: 100%; margin-top: 6px; padding: 11px; border: none;
+  background: var(--blue); color: #fff; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-edit-save:hover:not(:disabled) { background: #1558b0; }
+.btn-edit-save:disabled { opacity: .5; cursor: not-allowed; }
+
 /* ── IMPORT MODAL ── */
 .import-modal { width: 560px; }
 .import-hint {
