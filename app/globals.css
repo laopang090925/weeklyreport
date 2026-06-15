@@ -286,6 +286,13 @@ textarea.issue-area   { min-height: 80px; }
 }
 .btn-send:hover:not(:disabled) { background: #05974A; }
 .btn-send:disabled { opacity: .5; cursor: not-allowed; }
+.btn-import {
+  padding: 9px 20px; border: 1.5px solid var(--border);
+  background: #fff; color: var(--text-sub); border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
+}
+.btn-import:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+.btn-import:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ── REFRESH ICON BUTTON ── */
 .btn-refresh-icon {
@@ -349,6 +356,34 @@ textarea.issue-area   { min-height: 80px; }
   white-space: pre-wrap; word-break: break-all; color: #2d2d2d;
   max-height: 360px; overflow-y: auto;
 }
+
+/* ── IMPORT MODAL ── */
+.import-modal { width: 560px; }
+.import-hint {
+  font-size: 13px; color: var(--text-sub); line-height: 1.6;
+  margin-bottom: 12px; background: #F8FAFF; border-radius: 8px;
+  padding: 10px 14px; border: 1px solid var(--border);
+}
+.import-hint code {
+  background: #E8F0FE; color: var(--blue); padding: 1px 5px;
+  border-radius: 4px; font-family: 'Menlo', 'Consolas', monospace; font-size: 12px;
+}
+.import-textarea {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 12px; font-size: 13px; font-family: 'Menlo', 'Consolas', monospace;
+  line-height: 1.7; resize: vertical; color: var(--text);
+  transition: border-color .15s; margin-bottom: 14px;
+}
+.import-textarea:focus { outline: none; border-color: var(--blue); }
+.import-textarea::placeholder { color: var(--text-light); }
+.btn-import-confirm {
+  width: 100%; padding: 11px; border: none; background: var(--blue);
+  color: #fff; border-radius: 8px; font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: background .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-import-confirm:hover:not(:disabled) { background: #1558b0; }
+.btn-import-confirm:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ── TOAST ── */
 .toast {

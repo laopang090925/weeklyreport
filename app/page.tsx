@@ -43,6 +43,10 @@ export default function Page() {
   const [content, setContent] = useState('');
   const [issue, setIssue] = useState('');
 
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importing, setImporting] = useState(false);
+
   const weekKey = getWeekKeyByOffset(weekOffset);
   const weekDisplay = getWeekDisplay(weekKey);
   const isCurrentWeek = weekOffset === 0;
@@ -165,6 +169,56 @@ export default function Page() {
       showToast((err as Error).message || '发送失败', 'error');
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleImport() {
+    if (!isCurrentWeek) {
+      showToast('只能在当前周导入记录', 'error');
+      return;
+    }
+    const lines = importText.split('\n').map(l => l.trim()).filter(Boolean);
+    const parsed: Array<{ projectType: string; project: string; content: string; issue: string }> = [];
+    for (const line of lines) {
+      // strip leading "1. " or "1、" numbering
+      const stripped = line.replace(/^\d+[.、\s]+/, '');
+      const parts = stripped.split('｜');
+      if (parts.length < 3) continue;
+      const pt = parts[0].trim();
+      const proj = parts[1].trim();
+      const cont = parts[2].trim();
+      const iss = (parts[3] ?? '').trim() || '无';
+      if (!proj || !cont) continue;
+      parsed.push({ projectType: pt || '其他', project: proj, content: cont, issue: iss });
+    }
+    if (parsed.length === 0) {
+      showToast('未识别到有效记录，请检查格式', 'error');
+      return;
+    }
+    setImporting(true);
+    try {
+      const results: WorkRecord[] = [];
+      for (const item of parsed) {
+        const res = await fetch('/api/record', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item),
+        });
+        if (!res.ok) {
+          const d = await res.json();
+          throw new Error(d.error);
+        }
+        const { record } = await res.json();
+        results.push(record);
+      }
+      setRecords(prev => [...prev, ...results]);
+      showToast(`成功导入 ${results.length} 条记录`, 'success');
+      setImportText('');
+      setShowImportModal(false);
+    } catch (err: unknown) {
+      showToast((err as Error).message || '导入失败', 'error');
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -324,6 +378,9 @@ export default function Page() {
                   : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
                 }
               </button>
+              <button className="btn-import" onClick={() => { setShowImportModal(true); setImportText(''); }} disabled={!isCurrentWeek}>
+                导入
+              </button>
               <button className="btn-preview" onClick={handlePreview} disabled={records.length === 0}>
                 预览周报
               </button>
@@ -335,6 +392,39 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div
+          className="modal-mask"
+          onClick={e => { if (e.target === e.currentTarget) setShowImportModal(false); }}
+        >
+          <div className="modal import-modal">
+            <div className="modal-head">
+              <span className="modal-title">批量导入工作记录</span>
+              <button className="modal-close" onClick={() => setShowImportModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="import-hint">可将多条工作记录文本粘贴在文本框中，一键导入。格式：<code>项目类型｜所属项目｜工作内容｜问题</code>，每行一条，编号可选。</p>
+              <textarea
+                className="import-textarea"
+                placeholder={"1. 企业班车｜吉利吉行｜配合客户做现场测试刷卡｜无\n2. 交通护驾｜淮安公交｜汇总解决现有用户问题｜无"}
+                value={importText}
+                onChange={e => setImportText(e.target.value)}
+                rows={10}
+              />
+              <button
+                className="btn-import-confirm"
+                onClick={handleImport}
+                disabled={importing || !importText.trim()}
+              >
+                {importing && <span className="spinner" />}
+                确认导入
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Preview Modal */}
       {showModal && (
