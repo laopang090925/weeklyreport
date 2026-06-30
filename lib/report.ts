@@ -9,7 +9,7 @@ export interface WorkRecord {
   createdAt: string;
 }
 
-export const VALID_PROJECT_TYPES = ['企业班车', '交通护驾', '大问号', '其他', '公交地铁'] as const;
+export const VALID_PROJECT_TYPES = ['企业班车', '交通护驾', '大问号', '其他', '数字员工', '公交地铁'] as const;
 export type ProjectType = typeof VALID_PROJECT_TYPES[number];
 
 export function getWeekKey(date = new Date()): string {
