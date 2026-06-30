@@ -48,6 +48,7 @@ export default function Page() {
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [previewText, setPreviewText] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -462,7 +463,7 @@ export default function Page() {
                       </button>
                       <button
                         className="btn-del"
-                        onClick={() => handleDelete(r.id)}
+                        onClick={() => setConfirmDeleteId(r.id)}
                         disabled={deletingId !== null}
                         title="删除"
                       >
@@ -551,6 +552,33 @@ export default function Page() {
                 {editSaving && <span className="spinner" />}
                 保存修改
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {confirmDeleteId && (
+        <div
+          className="modal-mask"
+          onClick={e => { if (e.target === e.currentTarget) setConfirmDeleteId(null); }}
+        >
+          <div className="modal confirm-modal">
+            <div className="modal-head">
+              <span className="modal-title">确认删除</span>
+              <button className="modal-close" onClick={() => setConfirmDeleteId(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="confirm-text">删除后无法恢复，确定要删除这条记录吗？</p>
+              <div className="confirm-actions">
+                <button className="btn-confirm-cancel" onClick={() => setConfirmDeleteId(null)}>取消</button>
+                <button
+                  className="btn-confirm-delete"
+                  onClick={() => { handleDelete(confirmDeleteId); setConfirmDeleteId(null); }}
+                >
+                  确认删除
+                </button>
+              </div>
             </div>
           </div>
         </div>

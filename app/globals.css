@@ -471,6 +471,23 @@ textarea.issue-area   { min-height: 80px; }
   max-height: 360px; overflow-y: auto;
 }
 
+/* ── DELETE CONFIRM MODAL ── */
+.confirm-modal { width: 360px; }
+.confirm-text { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 20px; }
+.confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-confirm-cancel {
+  padding: 9px 20px; border: 1.5px solid var(--border);
+  background: #fff; color: var(--text-sub); border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
+}
+.btn-confirm-cancel:hover { border-color: var(--text-sub); }
+.btn-confirm-delete {
+  padding: 9px 20px; border: none;
+  background: #EF4444; color: #fff; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s;
+}
+.btn-confirm-delete:hover { background: #DC2626; }
+
 /* ── EDIT BUTTON ── */
 .btn-edit {
   width: 26px; height: 26px; border-radius: 6px;
