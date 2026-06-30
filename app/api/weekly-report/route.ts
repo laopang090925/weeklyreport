@@ -38,8 +38,22 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, report, count: records.length });
 }
 
-// GET /api/weekly-report — 预览当前周报（不发送）
+// GET /api/weekly-report
+// - Vercel Cron 触发时带 Authorization 头，自动发送周报
+// - 普通请求（前端预览）不带 Authorization，只返回内容不发送
 export async function GET(req: NextRequest) {
+  if (isCronAuthorized(req)) {
+    const weekKey = getWeekKey();
+    const records = await readWeekRecords(weekKey);
+    if (records.length === 0) {
+      return NextResponse.json({ error: '本周暂无工作记录' }, { status: 400 });
+    }
+    const today = getBeijingDateStr();
+    const report = formatReport(records, today);
+    await sendToWecom(report);
+    return NextResponse.json({ ok: true, report, count: records.length });
+  }
+
   const week = req.nextUrl.searchParams.get('week') ?? getWeekKey();
   const records = await readWeekRecords(week);
   const today = getBeijingDateStr();
