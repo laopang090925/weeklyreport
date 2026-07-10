@@ -61,6 +61,7 @@ export default function Page() {
   const [content, setContent] = useState('');
   const [issue, setIssue] = useState('');
   const [projectMap, setProjectMap] = useState<Record<string, string>>({});
+  const [projectMapLoaded, setProjectMapLoaded] = useState(false);
 
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
@@ -102,7 +103,8 @@ export default function Page() {
     fetch('/api/project-map')
       .then(res => res.json())
       .then(data => setProjectMap(data.map ?? {}))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setProjectMapLoaded(true));
   }, []);
 
   const projectOptions = useMemo(
@@ -113,9 +115,15 @@ export default function Page() {
     () => Object.keys(projectMap).filter(p => projectMap[p] === editProjectType),
     [projectMap, editProjectType]
   );
+  const sortedRecords = useMemo(
+    () => [...records].sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0)),
+    [records]
+  );
 
   // 校验所属项目与项目类型的历史匹配关系，不匹配时弹窗确认是否强制提交；返回 true 表示可以继续提交
+  // 映射还没加载完成时不做校验，避免把"还不知道"误判成"历史上没出现过"
   function confirmProjectTypeMatch(projectName: string, type: string): boolean {
+    if (!projectMapLoaded) return true;
     const knownType = projectMap[normalizeProjectName(projectName)];
     if (!knownType) {
       return confirm(`所属项目「${projectName}」在历史记录中未出现过，确定要以「${type}」类型提交吗？`);
@@ -298,14 +306,16 @@ export default function Page() {
       showToast('未识别到有效记录，请检查格式', 'error');
       return;
     }
-    const mismatches = parsed
-      .map(item => {
-        const knownType = projectMap[normalizeProjectName(item.project)];
-        if (!knownType) return `「${item.project}」未在历史记录中出现过（本次类型：${item.projectType}）`;
-        if (knownType !== item.projectType) return `「${item.project}」历史归类为「${knownType}」，与本次「${item.projectType}」不一致`;
-        return null;
-      })
-      .filter((m): m is string => m !== null);
+    const mismatches = projectMapLoaded
+      ? parsed
+          .map(item => {
+            const knownType = projectMap[normalizeProjectName(item.project)];
+            if (!knownType) return `「${item.project}」未在历史记录中出现过（本次类型：${item.projectType}）`;
+            if (knownType !== item.projectType) return `「${item.project}」历史归类为「${knownType}」，与本次「${item.projectType}」不一致`;
+            return null;
+          })
+          .filter((m): m is string => m !== null)
+      : [];
     if (mismatches.length > 0) {
       const ok = confirm(`以下记录与历史项目类型映射不一致，确定要继续导入吗？\n\n${mismatches.join('\n')}`);
       if (!ok) return;
@@ -385,7 +395,7 @@ export default function Page() {
                     key={t}
                     className={`type-tab${projectType === t ? ' active' : ''}`}
                     style={projectType === t ? { background: PROJECT_TYPE_COLORS[t], borderColor: PROJECT_TYPE_COLORS[t] } : undefined}
-                    onClick={() => setProjectType(t)}
+                    onClick={() => { if (t !== projectType) { setProjectType(t); setProject(''); } }}
                   >
                     {t}
                   </div>
@@ -481,12 +491,17 @@ export default function Page() {
               {records.length === 0 ? (
                 <div className="record-empty">暂无记录</div>
               ) : (
-                records.map((r, i) => (
+                sortedRecords.map((r, i) => (
                   <div key={r.id} className="record-item">
                     <span className="record-num">{i + 1}</span>
                     <div className="record-fields">
                       <div className="record-bubbles">
-                        <span className="bubble bubble-type">{r.projectType}</span>
+                        <span
+                          className="bubble bubble-type"
+                          style={{ background: PROJECT_TYPE_COLORS[r.projectType] ?? PROJECT_TYPE_COLORS['其他'], color: '#fff' }}
+                        >
+                          {r.projectType}
+                        </span>
                         <span className="bubble bubble-project">{r.project}</span>
                         <span className="record-divider">|</span>
                         <span className={`record-issue${r.issue && r.issue !== '无' ? ' has-issue' : ''}`}>
@@ -563,7 +578,7 @@ export default function Page() {
                       key={t}
                       className={`type-tab${editProjectType === t ? ' active' : ''}`}
                       style={editProjectType === t ? { background: PROJECT_TYPE_COLORS[t], borderColor: PROJECT_TYPE_COLORS[t] } : undefined}
-                      onClick={() => setEditProjectType(t)}
+                      onClick={() => { if (t !== editProjectType) { setEditProjectType(t); setEditProject(''); } }}
                     >
                       {t}
                     </div>

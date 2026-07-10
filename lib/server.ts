@@ -67,18 +67,20 @@ export async function readAllRecords(): Promise<WorkRecord[]> {
     arr.push(b);
     byWeek.set(m[1], arr);
   }
-  const all: WorkRecord[] = [];
-  for (const arr of byWeek.values()) {
-    try {
-      const res = await fetch(latestBlob(arr).downloadUrl, { cache: 'no-store' });
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (Array.isArray(data)) all.push(...data);
-    } catch {
-      // 跳过读取失败的周
-    }
-  }
-  return all;
+  const weeks = await Promise.all(
+    Array.from(byWeek.values()).map(async (arr): Promise<WorkRecord[]> => {
+      try {
+        const res = await fetch(latestBlob(arr).downloadUrl, { cache: 'no-store' });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch {
+        // 跳过读取失败的周
+        return [];
+      }
+    })
+  );
+  return weeks.flat();
 }
 
 // 注意：读取失败会抛出异常而不是返回 {}，避免调用方把"读取失败"误判为"映射本来就是空的"
