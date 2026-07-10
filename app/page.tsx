@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { VALID_PROJECT_TYPES, WorkRecord } from '@/lib/report';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { PROJECT_TYPE_COLORS, VALID_PROJECT_TYPES, WorkRecord, normalizeProjectName } from '@/lib/report';
 import LoginPage from './LoginPage';
 
 interface Toast { msg: string; type: 'success' | 'error' | 'info' }
@@ -60,6 +60,7 @@ export default function Page() {
   const [project, setProject] = useState('');
   const [content, setContent] = useState('');
   const [issue, setIssue] = useState('');
+  const [projectMap, setProjectMap] = useState<Record<string, string>>({});
 
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
@@ -97,6 +98,34 @@ export default function Page() {
 
   useEffect(() => { fetchRecords(true); }, [fetchRecords]);
 
+  useEffect(() => {
+    fetch('/api/project-map')
+      .then(res => res.json())
+      .then(data => setProjectMap(data.map ?? {}))
+      .catch(() => {});
+  }, []);
+
+  const projectOptions = useMemo(
+    () => Object.keys(projectMap).filter(p => projectMap[p] === projectType),
+    [projectMap, projectType]
+  );
+  const editProjectOptions = useMemo(
+    () => Object.keys(projectMap).filter(p => projectMap[p] === editProjectType),
+    [projectMap, editProjectType]
+  );
+
+  // 校验所属项目与项目类型的历史匹配关系，不匹配时弹窗确认是否强制提交；返回 true 表示可以继续提交
+  function confirmProjectTypeMatch(projectName: string, type: string): boolean {
+    const knownType = projectMap[normalizeProjectName(projectName)];
+    if (!knownType) {
+      return confirm(`所属项目「${projectName}」在历史记录中未出现过，确定要以「${type}」类型提交吗？`);
+    }
+    if (knownType !== type) {
+      return confirm(`所属项目「${projectName}」历史上归类为「${knownType}」，与当前选择的「${type}」不一致，确定要继续提交吗？`);
+    }
+    return true;
+  }
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!project.trim() || !content.trim()) {
@@ -108,6 +137,7 @@ export default function Page() {
       setWeekOffset(0);
       return;
     }
+    if (!confirmProjectTypeMatch(project.trim(), projectType)) return;
     setLoading(true);
     try {
       const res = await fetch('/api/record', {
@@ -121,6 +151,10 @@ export default function Page() {
       }
       const { record } = await res.json();
       setRecords(prev => [...prev, record]);
+      setProjectMap(prev => {
+        const key = normalizeProjectName(record.project);
+        return prev[key] ? prev : { ...prev, [key]: record.projectType };
+      });
       setProject('');
       setContent('');
       setIssue('');
@@ -211,6 +245,7 @@ export default function Page() {
       showToast('所属项目和工作内容不能为空', 'error');
       return;
     }
+    if (!confirmProjectTypeMatch(editProject.trim(), editProjectType)) return;
     setEditSaving(true);
     try {
       const res = await fetch('/api/record', {
@@ -262,6 +297,18 @@ export default function Page() {
     if (parsed.length === 0) {
       showToast('未识别到有效记录，请检查格式', 'error');
       return;
+    }
+    const mismatches = parsed
+      .map(item => {
+        const knownType = projectMap[normalizeProjectName(item.project)];
+        if (!knownType) return `「${item.project}」未在历史记录中出现过（本次类型：${item.projectType}）`;
+        if (knownType !== item.projectType) return `「${item.project}」历史归类为「${knownType}」，与本次「${item.projectType}」不一致`;
+        return null;
+      })
+      .filter((m): m is string => m !== null);
+    if (mismatches.length > 0) {
+      const ok = confirm(`以下记录与历史项目类型映射不一致，确定要继续导入吗？\n\n${mismatches.join('\n')}`);
+      if (!ok) return;
     }
     setImporting(true);
     try {
@@ -337,6 +384,7 @@ export default function Page() {
                   <div
                     key={t}
                     className={`type-tab${projectType === t ? ' active' : ''}`}
+                    style={projectType === t ? { background: PROJECT_TYPE_COLORS[t], borderColor: PROJECT_TYPE_COLORS[t] } : undefined}
                     onClick={() => setProjectType(t)}
                   >
                     {t}
@@ -348,10 +396,14 @@ export default function Page() {
               <label className="form-label">所属项目</label>
               <input
                 type="text"
-                placeholder="请输入所属项目名称"
+                list="project-options"
+                placeholder="请输入或选择所属项目名称"
                 value={project}
                 onChange={e => setProject(e.target.value)}
               />
+              <datalist id="project-options">
+                {projectOptions.map(p => <option key={p} value={p} />)}
+              </datalist>
             </div>
             <div className="form-group">
               <label className="form-label">工作内容</label>
@@ -510,6 +562,7 @@ export default function Page() {
                     <div
                       key={t}
                       className={`type-tab${editProjectType === t ? ' active' : ''}`}
+                      style={editProjectType === t ? { background: PROJECT_TYPE_COLORS[t], borderColor: PROJECT_TYPE_COLORS[t] } : undefined}
                       onClick={() => setEditProjectType(t)}
                     >
                       {t}
@@ -521,10 +574,14 @@ export default function Page() {
                 <label className="form-label">所属项目</label>
                 <input
                   type="text"
-                  placeholder="请输入所属项目名称"
+                  list="edit-project-options"
+                  placeholder="请输入或选择所属项目名称"
                   value={editProject}
                   onChange={e => setEditProject(e.target.value)}
                 />
+                <datalist id="edit-project-options">
+                  {editProjectOptions.map(p => <option key={p} value={p} />)}
+                </datalist>
               </div>
               <div className="form-group">
                 <label className="form-label">工作内容</label>

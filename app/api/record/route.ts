@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getWeekKey, getBeijingDateStr, WorkRecord } from '@/lib/report';
-import { readWeekRecords, writeWeekRecords } from '@/lib/server';
+import { getWeekKey, getBeijingDateStr, normalizeProjectType, normalizeProjectName, WorkRecord } from '@/lib/report';
+import { readWeekRecords, writeWeekRecords, readProjectMap, writeProjectMap } from '@/lib/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +36,17 @@ export async function POST(req: NextRequest) {
 
   records.push(record);
   await writeWeekRecords(weekKey, records);
+
+  // 只学习全新的所属项目名称，已有映射的名称不会被自动覆盖（避免误录数据污染映射，需走手动修正）
+  // 映射读取/写入失败不应影响记录已经提交成功，静默跳过，不重试覆盖，避免用不完整数据冲掉历史映射
+  try {
+    const projectMap = await readProjectMap();
+    const projectKey = normalizeProjectName(record.project);
+    if (!(projectKey in projectMap)) {
+      projectMap[projectKey] = normalizeProjectType(record.projectType);
+      await writeProjectMap(projectMap);
+    }
+  } catch {}
 
   return NextResponse.json({ record }, { status: 201 });
 }
