@@ -493,7 +493,7 @@ export default function Page() {
               ) : (
                 sortedRecords.map((r, i) => (
                   <div key={r.id} className="record-item">
-                    <span className="record-num">{i + 1}</span>
+                    <span className="record-num">{sortedRecords.length - i}</span>
                     <div className="record-fields">
                       <div className="record-bubbles">
                         <span
