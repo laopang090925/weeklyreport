@@ -65,9 +65,9 @@ export function normalizeProjectName(name: string): string {
 export function formatReport(records: WorkRecord[], reportDate: string): string {
   if (records.length === 0) return '';
   const lines = [
-    `负责人：张达奇｜升级运维项目｜本周工作进展（${reportDate}）`,
+    `负责人：张达奇|升级运维项目|本周工作进展（${reportDate}）`,
     ...records.map((r, i) =>
-      `${i + 1}. ${normalizeProjectType(r.projectType)}｜${r.project}｜${r.content}｜${r.issue || '无'}`
+      `${i + 1}. ${normalizeProjectType(r.projectType)}|${r.project}|${r.content}|${r.issue || '无'}`
     ),
   ];
   return lines.join('\n');
